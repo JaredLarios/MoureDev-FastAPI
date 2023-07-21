@@ -15,7 +15,7 @@ class Tag(db.Document):
     name = db.StringField(max_length=10)
 
 class FastTag(BaseModel):
-    tag : str 
+    name : str 
 
 class FastUser(BaseModel):
     name : str = Field(max_length=40)

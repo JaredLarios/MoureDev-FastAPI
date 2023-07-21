@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from mongoengine import *
 from bson import ObjectId
 from starlette.applications import Starlette
@@ -18,7 +18,8 @@ app = FastAPI(
         )
     ],
     on_startup=[lambda: connect(
-        host="mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh")],
+        host="mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.1",
+        db="local")],
     on_shutdown=[lambda: disconnect()],
 )
 
@@ -27,15 +28,39 @@ admin = Admin(title="Example: MongoEngine")
 
 @app.post("/add/")
 async def add_user(user: FastUser):
+    tag_name = user.tags.name
+    if type(search_user(user.name)) == FastUser:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail= "User already exist")
+    
     user_dict = dict(user)
-    tags_ids = search_tag(user)
-    user_dict["tags"] = []
-    mongo_item = User(**user_dict).save()
-    return({"mesage": user})
+    tags_ids = search_tag(tag_name)
+    #user_dict["tags"] = [ObjectId(tags_ids)]
+    #mongo_item = User(**user_dict).save()
+    return({"mesage": "user added", "data": user})
 
-def search_tag(user: FastUser):
-    tag_dict = dict(user.tags)
-    return ObjectId(tag_dict["tag"])
+@app.get("/get/")
+async def get_tag(tag: str):
+    tag_id = search_user(tag)
+    return {"message": tag_id}
+
+def search_tag(tag: str):
+    tag_dict = Tag.objects(name=tag).get()
+    return str(tag_dict.id)
+
+def search_user(user: str):
+    user_dict = User.objects(name=user).get()
+    user_dict = user_dict.to_mongo().to_dict()
+    del user_dict["_id"]
+    print(user_scheme(user_dict))
+    return FastUser(**user_scheme(user_dict))
+
+def user_scheme(user):
+    return {"name": user["name"],
+           "password": user["password"],
+           "tags": str(user["tags"])
+           }
+
 
 # Add views
 class UserView(ModelView):
