@@ -29,14 +29,14 @@ admin = Admin(title="Example: MongoEngine")
 @app.post("/add/")
 async def add_user(user: FastUser):
     tag_name = user.tags.name
-    if type(search_user(user.name)) == FastUser:
+    if search_user(user.name) == True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail= "User already exist")
     
     user_dict = dict(user)
     tags_ids = search_tag(tag_name)
-    #user_dict["tags"] = [ObjectId(tags_ids)]
-    #mongo_item = User(**user_dict).save()
+    user_dict["tags"] = [ObjectId(tags_ids)]
+    mongo_item = User(**user_dict).save()
     return({"mesage": "user added", "data": user})
 
 @app.get("/get/")
@@ -49,11 +49,15 @@ def search_tag(tag: str):
     return str(tag_dict.id)
 
 def search_user(user: str):
-    user_dict = User.objects(name=user).get()
-    user_dict = user_dict.to_mongo().to_dict()
-    del user_dict["_id"]
-    print(user_scheme(user_dict))
-    return FastUser(**user_scheme(user_dict))
+    try:
+        user_dict = User.objects(name=user).get()
+        user_dict = user_dict.to_mongo().to_dict()
+        print(user_dict)
+        if user_dict["name"] != None:
+            return True
+        
+    except:
+        return False
 
 def user_scheme(user):
     return {"name": user["name"],
