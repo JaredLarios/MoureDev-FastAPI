@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request, Response
 from mongoengine import *
 from bson import ObjectId
 from starlette.applications import Starlette
@@ -25,6 +25,7 @@ app = FastAPI(
 
 # Create admin
 admin = Admin(title="Example: MongoEngine")
+
 
 @app.post("/add/")
 async def add_user(user: FastUser):
@@ -69,6 +70,7 @@ def user_scheme(user):
 # Add views
 class UserView(ModelView):
     fields_default_sort = [(User.name, True)]
+    export_fields = [User.id, User.name, User.tags]
 
 
 admin.add_view(UserView(User, icon="fa fa-users"))

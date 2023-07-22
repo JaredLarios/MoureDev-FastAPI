@@ -1,6 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Optional
+from fastapi import Request
 
 import mongoengine as db
 from PIL import Image
@@ -14,6 +15,9 @@ class User(db.Document):
 class Tag(db.Document):
     name = db.StringField(max_length=10)
 
+    def __admin_repr__(self, request: Request):
+        return f"{self.name}"
+
 class FastTag(BaseModel):
     name : str 
 
@@ -21,6 +25,10 @@ class FastUser(BaseModel):
     name : str = Field(max_length=40)
     password : str = Field(max_length=40)
     tags : FastTag
+
+    def __admin_repr__(self, request: Request):
+        return f"{self.name}"
+
 
 class Todo(db.Document):
     title = db.StringField(max_length=60)
@@ -47,19 +55,26 @@ class File(db.Document):
     name = db.StringField(max_length=20)
     data = db.FileField()
 
+    def __admin_repr__(self, request: Request):
+        return f"{self.name}"
 
 
 class Image(db.Document):
     name = db.StringField(max_length=20)
     image = db.ImageField()
 
+    def __admin_repr__(self, request: Request):
+        return f"{self.name}"
 
 class Video(db.Document):
     name = db.StringField(max_length=20)
     image = db.ReferenceField(Image, required=False)
-    print(image)
     data = db.FileField()
     year = db.IntField()
+
+    def __admin_repr__(self, request: Request):
+        return f"{self.name}"
+
 
 
 
